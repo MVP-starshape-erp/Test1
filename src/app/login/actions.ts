@@ -8,7 +8,7 @@ export async function sendOTP(formData: FormData) {
   const email = formData.get('email') as string
   
   if (!email || !email.includes('@')) {
-    return { error: 'Invalid email address' }
+    throw new Error('Invalid email address')
   }
 
   const supabase = await createClient()
@@ -23,9 +23,9 @@ export async function sendOTP(formData: FormData) {
 
   if (error) {
     if (error.status === 429) {
-      return { error: 'Too many requests. Please try again later.' }
+      throw new Error('Too many requests. Please try again later.')
     }
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   // Redirect to verification page with email as parameter to show the user
@@ -37,7 +37,7 @@ export async function verifyOTP(formData: FormData) {
   const token = formData.get('token') as string
 
   if (!email || !token || token.length !== 6) {
-    return { error: 'Invalid email or OTP format' }
+    throw new Error('Invalid email or OTP format')
   }
 
   const supabase = await createClient()
@@ -49,7 +49,7 @@ export async function verifyOTP(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/', 'layout')
