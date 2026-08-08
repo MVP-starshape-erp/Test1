@@ -6,11 +6,13 @@ import { Suspense } from 'react'
 
 function VerifyForm() {
   const searchParams = useSearchParams()
-  const email = searchParams.get('email') ?? ''
+  const email = searchParams.get('email')
+  const phone = searchParams.get('phone')
 
   return (
     <form action={verifyOTP} className="space-y-6">
-      <input type="hidden" name="email" value={email} />
+      {email && <input type="hidden" name="email" value={email} />}
+      {phone && <input type="hidden" name="phone" value={phone} />}
       
       <div>
         <label htmlFor="token" className="block text-sm font-medium text-gray-700">
@@ -47,9 +49,9 @@ export default function VerifyPage() {
     <div className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-50">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
         <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Check your email</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Verify your code</h1>
           <p className="mt-2 text-sm text-gray-600">
-            We sent a verification code to your email address.
+            We sent a verification code to your email or phone.
           </p>
         </div>
         
