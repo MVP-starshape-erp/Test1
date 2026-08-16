@@ -6,6 +6,8 @@ import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { createClient as createStatelessClient } from '@supabase/supabase-js'
 
+import * as argon2 from 'argon2'
+
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -14,26 +16,36 @@ export async function loginAction(formData: FormData) {
     throw new Error('Email and password are required')
   }
 
-  // 1. Verify credentials using a stateless client (so we don't set cookies yet)
-  const statelessClient = createStatelessClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  )
+  // 0. Fetch the user's custom salt and password hash using Admin Client
+  const adminClient = createAdminClient()
+  const { data: securityData, error: securityError } = await adminClient
+    .from('user_security')
+    .select('custom_salt, password_hash, user_id')
+    .eq('email', email)
+    .single()
 
-  const { data: authData, error: authError } = await statelessClient.auth.signInWithPassword({
-    email,
-    password
-  })
+  if (securityError || !securityData) {
+    throw new Error('Invalid email or password (Security profile not found)')
+  }
 
-  if (authError || !authData.user) {
+  // 1. Combine and Verify Hash
+  const combinedPassword = password + securityData.custom_salt
+  
+  const isMatch = await argon2.verify(securityData.password_hash, combinedPassword)
+  if (!isMatch) {
     throw new Error('Invalid email or password')
   }
 
-  const userId = authData.user.id
+  // Get the user data from Supabase Admin since we bypassed the standard login
+  const { data: userData, error: userError } = await adminClient.auth.admin.getUserById(securityData.user_id)
+  if (userError || !userData.user) {
+    throw new Error('User not found in authentication system')
+  }
+
+  const userId = userData.user.id
+  const authData = userData
 
   // 2. Fetch the user's role using Admin Client
-  const adminClient = createAdminClient()
   const { data: roleData, error: roleError } = await adminClient
     .from('user_roles')
     .select('role')
