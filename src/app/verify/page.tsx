@@ -8,11 +8,13 @@ function VerifyForm() {
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
   const phone = searchParams.get('phone')
+  const sessionId = searchParams.get('sessionId')
 
   return (
     <form action={verifyOTP} className="space-y-6">
       {email && <input type="hidden" name="email" value={email} />}
       {phone && <input type="hidden" name="phone" value={phone} />}
+      {sessionId && <input type="hidden" name="sessionId" value={sessionId} />}
       
       <div>
         <label htmlFor="token" className="block text-sm font-medium text-gray-700">
