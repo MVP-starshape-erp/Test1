@@ -66,7 +66,7 @@ export async function verifyOTP(formData: FormData) {
   const token = formData.get('token') as string
   const sessionId = formData.get('sessionId') as string | null
 
-  if (!token || token.length !== 6) {
+  if (!token || token.length < 6 || token.length > 8) {
     throw new Error('Invalid OTP format')
   }
   if (!email && !phone) {
